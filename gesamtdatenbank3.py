@@ -195,7 +195,12 @@ for user in ordner:
                 try:
                     datei2=pd.read_csv(filename, skiprows=3,index_col=False).fillna(0)
                     del datei2['Zeit']
-                    del datei2['Kommentar']
+                    try:
+                        del datei2['Kommentar']
+                    except:
+                        
+
+                        print 'kom nicht vorhanden'
                     datei2['Q-Resorber']=datei2['Q-Resorber']*1000
                     zeiti=pd.date_range(datumzeit, periods=len(datei2),freq='S')
                     datei2.index=zeiti
