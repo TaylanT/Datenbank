@@ -16,7 +16,7 @@ zaehler=0
 list=[]
 pfad=u'/home/ttaylan/Dokumente/Datenbank/NeueDaten/'
 dbname='Messwerte'
-messung='nachdarm4'
+messung='neu'
 os.chdir(pfad)
 
 #list aller vorhandener ordner
@@ -58,7 +58,7 @@ for user in ordner:
 
         #Abfrage ob Datei shon in Datenbank vorhanden
         
-        query_string="select COP from nachdarm4 where Filename=\'%s\'" %tag
+        query_string="select COP from neu where Filename=\'%s\'" %tag
         #zum debugggen
         #print query_string
         
@@ -195,7 +195,11 @@ for user in ordner:
                 
                 try:
                     datei2=pd.read_csv(filename, skiprows=3,index_col=False).fillna(0)
-                    del datei2['Zeit']
+                    try:
+
+                    	del datei2['Zeit']
+                    except:
+                    	pass
                     try:
                         del datei2['Kommentar']
                     except:
@@ -205,17 +209,17 @@ for user in ordner:
                     datei2['Q-Resorber']=datei2['Q-Resorber']*1000
                     zeiti=pd.date_range(datumzeit, periods=len(datei2),freq='S')
                     datei2.index=zeiti
-                    data = pd.DataFrame(datei2, index=zeiti).replace([np.inf, -np.inf], np.nan).fillna(0)
+                    data = pd.DataFrame(datei2, index=zeiti)
                 
                 
                    
                     #tag=filename.replace('.csv','')
-                    client.write_points(data, messung,{'Filename': tag,'User':user})
+                    client.write_points(data, messung,{'Filename': tag})
                     print 'Ok neu:     %s'%(filename)
                     zaehler=zaehler+1
-                except KeyError:
+                except InfluxDBClientError:
                 	e = sys.exc_info()[0]
-                	print "<p>Error: %s</p>" % e
+                	print "<p>Error: %s</p>%s" % (e,filename)
 
                     
         #wenn vorhanden
