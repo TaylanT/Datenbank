@@ -2,6 +2,7 @@
 import csv
 import unicodecsv
 import os
+import sys
 import csv
 import pandas as pd
 from influxdb import DataFrameClient
@@ -200,7 +201,7 @@ for user in ordner:
                     except:
                         
 
-                        print 'kom nicht vorhanden'
+                        pass
                     datei2['Q-Resorber']=datei2['Q-Resorber']*1000
                     zeiti=pd.date_range(datumzeit, periods=len(datei2),freq='S')
                     datei2.index=zeiti
@@ -213,8 +214,10 @@ for user in ordner:
                     print 'Ok neu:     %s'%(filename)
                     zaehler=zaehler+1
                 except KeyError:
-            
-                    print 'Error:     %s'%(filename)
+                	e = sys.exc_info()[0]
+                	print "<p>Error: %s</p>" % e
+
+                    
         #wenn vorhanden
         else:
             #print 'ist vorhanden'
