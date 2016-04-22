@@ -217,7 +217,7 @@ for user in ordner:
                     client.write_points(data, messung,{'Filename': tag})
                     print 'Ok neu:     %s'%(filename)
                     zaehler=zaehler+1
-                except InfluxDBClientError:
+                except:
                 	e = sys.exc_info()[0]
                 	print "<p>Error: %s</p>%s" % (e,filename)
 
@@ -227,9 +227,9 @@ for user in ordner:
             #print 'ist vorhanden'
 		      pass
 	            
-anzahl=len(list)
 
-print 'es wurden %d Messungen von %d Messungen erfogreich importiert' %(zaehler,anzahl)
+
+print 'OK'
         
 
 
