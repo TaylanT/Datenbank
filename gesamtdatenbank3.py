@@ -8,11 +8,14 @@ import pandas as pd
 from influxdb import DataFrameClient
 # from influxdb.exceptions import InfluxDBClientError
 
+
+
+
 zaehler = 0
 list = []
 pfad = u'/home/ttaylan/Dokumente/Datenbank/NeueDaten/'
-dbname = 'Messwerte'
-messung = 'neu'
+dbname = 'test2'
+messung = 'neu1'
 os.chdir(pfad)
 
 # list aller vorhandener ordner
@@ -56,16 +59,17 @@ for user in ordner:
         #print query_string
         
         #fehler handling datenbank
+
         try:
             check=client.query(query_string)
         except:
             check=True
 
         #wenn leer (tag nicht vorhanden)
-        if bool(check)==False:
+        # if bool(check)==False:
             #print 'ist leer'
 
-
+        if False==False:
             # oeffnen csv und auslesen inhalt
             sr=open(dateiname, "rb")
             in_txt = csv.reader(sr, delimiter = '\t')
@@ -80,10 +84,9 @@ for user in ordner:
             inhalt2=datei.read()
 
             t2=inhalt2.split('\n')
-
-
             #Bedingung wenn alte Messung
             if t2[0]=='LabVIEW Measurement\t\r':
+                pass
 
                 for row in in_txt:    
                     if index==24:
@@ -133,44 +136,39 @@ for user in ordner:
                     client.write_points(data, messung,{'Filename': tag, 'User':user})
                     print 'alt erfolgreich! %s' % (filename)
                     zaehler=zaehler+1
-                except:
+                except ValueError:
                 
                     
                     print 'DBError:     %s'%(filename)
-                
-               
-                
-                
-                    
-                    
-                #Abschnitt neues Protokoll    
+
             else:
+                # NEUE MESSUNG
                 for row in in_txt:     
                     if row:
                         writer.writerow(row)
-                    
                 sr.close()
                 output.close()
-                
-                
+
                 datei=open(filename,'r')
-                
+
                 inhalt=datei.read()
-                
+
                 t=inhalt.split('\n')
                          #fuer tags
                 tagsi=t[0]
                 tags=tagsi.replace('\r','').split(',')
-                
+
                 day=t[1][0:2]
                 month=t[1][3:5]
                 year=t[1][6:10]
                 uhrzeit=t[5][0:8].replace('.',':')
                 datumzeit=year+'-'+month+'-'+day+' '+uhrzeit
-                
-                
+
+                print datumzeit
                 try:
-                    datei2=pd.read_csv(filename, skiprows=3,index_col=False).fillna(0)
+                    datei2 = pd.read_csv(filename, skiprows=3,index_col=False)
+                    datei2 = datei2.fillna(0).replace([np.inf, -np.inf], np.nan)
+                    datei2 = datei2.fillna(0)
                     try:
 
                     	del datei2['Zeit']
@@ -179,30 +177,33 @@ for user in ordner:
                     try:
                         del datei2['Kommentar']
                     except:
-                        
+
 
                         pass
-                    datei2['Q-Resorber']=datei2['Q-Resorber']*1000
+                    try:
+
+                        datei2['Q-Resorber']=datei2['Q-Resorber']*1000
+                    except KeyError:
+                        pass
                     zeiti=pd.date_range(datumzeit, periods=len(datei2),freq='S')
                     datei2.index=zeiti
                     data = pd.DataFrame(datei2, index=zeiti)
-                
-                
-                   
+
                     #tag=filename.replace('.csv','')
+                    # print data.dtypes
                     client.write_points(data, messung,{'Filename': tag})
                     print 'Ok neu:     %s'%(filename)
-                    zaehler=zaehler+1
+
                 except ValueError:
                 	e = sys.exc_info()[0]
                 	print "<p>Error: %s</p>%s" % (e,filename)
 
-                    
+
         #wenn vorhanden
         else:
             #print 'ist vorhanden'
 		      pass
-	            
+
 
 
 print 'OK'
