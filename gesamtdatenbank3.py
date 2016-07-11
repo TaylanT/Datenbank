@@ -3,61 +3,54 @@ import csv
 import unicodecsv
 import os
 import sys
-import csv
+
 import pandas as pd
 from influxdb import DataFrameClient
-from influxdb.exceptions import InfluxDBClientError
-import os
-import numpy as np
+# from influxdb.exceptions import InfluxDBClientError
 
-
-
-zaehler=0
-list=[]
-pfad=u'/home/ttaylan/Dokumente/Datenbank/NeueDaten/'
-dbname='Messwerte'
-messung='neu'
+zaehler = 0
+list = []
+pfad = u'/home/ttaylan/Dokumente/Datenbank/NeueDaten/'
+dbname = 'Messwerte'
+messung = 'neu'
 os.chdir(pfad)
 
-#list aller vorhandener ordner
-thedir=pfad
-ordner=[ name for name in os.listdir(thedir) if os.path.isdir(os.path.join(thedir, name)) ]
+# list aller vorhandener ordner
+thedir = pfad
+ordner = [name for name in os.listdir(thedir) if os.path.isdir(os.path.join(thedir, name)) ]
 
-#ordner=os.listdir(u"./")
+# ordner=os.listdir(u"./")
 for user in ordner:
     os.chdir(pfad+user)
-    list=[]
-    #print os.getcwd()
+    list = []
+    # print os.getcwd()
     print user
-    
-    
-   
-    
+
     for file in os.listdir(u"./"):
-        #print file
-        if file.endswith(".lvm") and os.path.getsize(file)>=1000000:
+        # print file
+        if file.endswith(".lvm") and os.path.getsize(file) >= 1000000:
             list.append(pfad+user+'/'+file)
 
     for dateiname in list:
-        #umwandlung dateiname lvm in csv und erstellung eines tags fuer speicherung in datenbank
-        test=dateiname.encode('utf8')       
-	        
-        filename=test.replace('.lvm','.csv').replace('\xd6','oe').replace('\xfc','ue').replace('\xe4','ae')
+        # umwandlung dateiname lvm in csv und erstellung eines tags fuer speicherung in datenbank
+        test = dateiname.encode('utf8')
+
+        filename = test.replace('.lvm', '.csv').replace('\xd6', 'oe').replace('\xfc', 'ue').replace('\xe4', 'ae')
         client = DataFrameClient('localhost', 8086, 'root', 'root', dbname)
-        tag=os.path.basename(filename).replace('.csv','')
+        tag = os.path.basename(filename).replace('.csv', '')
 
 
 
         if os.path.isfile(filename):
             pass
         else:
-            
-    
-                       
+
+
+
         	index=0
 
         #Abfrage ob Datei shon in Datenbank vorhanden
-        
+
         query_string="select COP from neu where Filename=\'%s\'" %tag
         #zum debugggen
         #print query_string
@@ -72,11 +65,8 @@ for user in ordner:
         if bool(check)==False:
             #print 'ist leer'
 
-                
-                
-                
-                
-            #oeffnen csv und auslesen inhalt     
+
+            # oeffnen csv und auslesen inhalt
             sr=open(dateiname, "rb")
             in_txt = csv.reader(sr, delimiter = '\t')
             output = open(filename, 'wb')
@@ -84,57 +74,43 @@ for user in ordner:
             index=0
             a=[]
             b=[]
-        
-               
-            datei=open(dateiname,'r')
-                
+
+            datei = open(dateiname, 'r')
+
             inhalt2=datei.read()
-                
+
             t2=inhalt2.split('\n')
-            
-                
+
+
             #Bedingung wenn alte Messung
             if t2[0]=='LabVIEW Measurement\t\r':
-              
-                    
-               
+
                 for row in in_txt:    
                     if index==24:
                         laenge=len(row)
-                                
+
                         for spalte in row:
-                            conv=spalte.replace('\xd6','oe').replace('\xfc','ue').replace('\xb3','3')
-                                  
+                            conv = spalte.replace('\xd6','oe').replace('\xfc','ue').replace('\xb3','3')
+
                             a.append(conv)
-                                    
+
                         del a[laenge-1]
-                        row=a
-                                
-                           
-                            
-                                
-                                
-                    if index>24:
+                        row = a
+
+                    if index > 24:
                         del row[laenge-1]
                         writer.writerow(row)
                     else:
                         writer.writerow(row)     
-                    
-                        
-                   
-                            
-                    index=index+1
-            
-                
-                    
-                
-             
-                datei=open(filename,'r')
-                
+
+                    index = index+1
+
+                datei = open(filename, 'r')
+
                 inhalt=datei.read()
-                
+
                 t=inhalt.split('\n')
-       
+
 
 
                 day=t[10][13:15]
@@ -217,7 +193,7 @@ for user in ordner:
                     client.write_points(data, messung,{'Filename': tag})
                     print 'Ok neu:     %s'%(filename)
                     zaehler=zaehler+1
-                except:
+                except ValueError:
                 	e = sys.exc_info()[0]
                 	print "<p>Error: %s</p>%s" % (e,filename)
 
