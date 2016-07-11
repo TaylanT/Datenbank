@@ -3,6 +3,7 @@ import csv
 import unicodecsv
 import os
 import sys
+import numpy as np
 
 import pandas as pd
 from influxdb import DataFrameClient
@@ -62,14 +63,12 @@ for user in ordner:
 
         try:
             check=client.query(query_string)
+            print check, query_string
         except:
             check=True
 
         #wenn leer (tag nicht vorhanden)
-        # if bool(check)==False:
-            #print 'ist leer'
-
-        if False==False:
+        if bool(check)==False:
             # oeffnen csv und auslesen inhalt
             sr=open(dateiname, "rb")
             in_txt = csv.reader(sr, delimiter = '\t')
