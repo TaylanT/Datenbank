@@ -55,7 +55,7 @@ for user in ordner:
 
         #Abfrage ob Datei shon in Datenbank vorhanden
 
-        query_string="select COP from neu where Filename=\'%s\'" %tag
+        query_string="select COP from neu1 where Filename=\'%s\'" %tag
         #zum debugggen
         #print query_string
         
@@ -63,10 +63,10 @@ for user in ordner:
 
         try:
             check=client.query(query_string)
-            print check, query_string
+            
         except:
             check=True
-
+        print bool(check)
         #wenn leer (tag nicht vorhanden)
         if bool(check)==False:
             # oeffnen csv und auslesen inhalt
@@ -125,7 +125,10 @@ for user in ordner:
                 
                 try:
                     datei2=pd.read_csv(filename, skiprows=24,index_col=False).fillna(0)
-                    del datei2['X_Value']
+                    try:
+                        del datei2['X_Value']
+                    except:
+                        pass
                     zeiti=pd.date_range(datumzeit, periods=len(datei2),freq='S')
                     datei2.index=zeiti
                     data = pd.DataFrame(datei2, index=zeiti)
