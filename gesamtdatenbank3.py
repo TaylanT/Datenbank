@@ -9,9 +9,6 @@ import pandas as pd
 from influxdb import DataFrameClient
 # from influxdb.exceptions import InfluxDBClientError
 
-
-
-
 zaehler = 0
 list = []
 pfad = u'/home/ttaylan/Dokumente/Datenbank/NeueDaten/'
@@ -21,7 +18,8 @@ os.chdir(pfad)
 
 # list aller vorhandener ordner
 thedir = pfad
-ordner = [name for name in os.listdir(thedir) if os.path.isdir(os.path.join(thedir, name)) ]
+ordner = [name for name in os.listdir(thedir) if
+        os.path.isdir(os.path.join(thedir, name))]
 
 # ordner=os.listdir(u"./")
 for user in ordner:
@@ -39,52 +37,44 @@ for user in ordner:
         # umwandlung dateiname lvm in csv und erstellung eines tags fuer speicherung in datenbank
         test = dateiname.encode('utf8')
 
-        filename = test.replace('.lvm', '.csv').replace('\xd6', 'oe').replace('\xfc', 'ue').replace('\xe4', 'ae')
+        filename = test.replace('.lvm', '.csv').replace('\xd6', 'oe')\
+            .replace('\xfc', 'ue').replace('\xe4', 'ae')
         client = DataFrameClient('localhost', 8086, 'root', 'root', dbname)
         tag = os.path.basename(filename).replace('.csv', '')
-
-
-
         if os.path.isfile(filename):
             pass
         else:
+            index = 0
 
+        # Abfrage ob Datei shon in Datenbank vorhanden
 
-
-        	index=0
-
-        #Abfrage ob Datei shon in Datenbank vorhanden
-
-        query_string="select COP from neu1 where Filename=\'%s\'" %tag
-        #zum debugggen
-        #print query_string
-        
-        #fehler handling datenbank
+        query_string = "select COP from neu1 where Filename=\'%s\'" % tag
+        # zum debugggen
+        # print query_string
+        # fehler handling datenbank
 
         try:
-            check=client.query(query_string)
-            
+            check = client.query(query_string)
         except:
-            check=True
-        print bool(check)
-        #wenn leer (tag nicht vorhanden)
-        if bool(check)==False:
+            check = True
+        # wenn leer (tag nicht vorhanden)
+        if bool(check) is False:
             # oeffnen csv und auslesen inhalt
-            sr=open(dateiname, "rb")
-            in_txt = csv.reader(sr, delimiter = '\t')
+            sr = open(dateiname, "rb")
+            in_txt = csv.reader(sr, delimiter='\t')
             output = open(filename, 'wb')
-            writer=csv.writer(output)
-            index=0
-            a=[]
-            b=[]
+            writer = csv.writer(output)
+            index = 0
+            a = []
+            b = []
 
             datei = open(dateiname, 'r')
 
-            inhalt2=datei.read()
+            inhalt2 = datei.read()
 
-            t2=inhalt2.split('\n')
-            #Bedingung wenn alte Messung
-            if t2[0]=='LabVIEW Measurement\t\r':
+            t2 = inhalt2.split('\n')
+            # Bedingung wenn alte Messung
+            if t2[0] == 'LabVIEW Measurement\t\r':
                 pass
 
                 for row in in_txt:    
@@ -145,72 +135,65 @@ for user in ordner:
 
             else:
                 # NEUE MESSUNG
-                for row in in_txt:     
+                for row in in_txt:
                     if row:
                         writer.writerow(row)
                 sr.close()
                 output.close()
 
-                datei=open(filename,'r')
+                datei = open(filename, 'r')
 
-                inhalt=datei.read()
+                inhalt = datei.read()
 
-                t=inhalt.split('\n')
-                         #fuer tags
-                tagsi=t[0]
-                tags=tagsi.replace('\r','').split(',')
+                t = inhalt.split('\n')
+                # fuer tags
+                tagsi = t[0]
+                tags = tagsi.replace('\r', '').split(',')
 
-                day=t[1][0:2]
-                month=t[1][3:5]
-                year=t[1][6:10]
-                uhrzeit=t[5][0:8].replace('.',':')
-                datumzeit=year+'-'+month+'-'+day+' '+uhrzeit
+                day = t[1][0:2]
+                month = t[1][3:5]
+                year = t[1][6:10]
+                uhrzeit = t[5][0:8].replace('.', ':')
+                datumzeit = year+'-'+month+'-'+day+' '+uhrzeit
 
                 print datumzeit
                 try:
-                    datei2 = pd.read_csv(filename, skiprows=3,index_col=False)
-                    datei2 = datei2.fillna(0).replace([np.inf, -np.inf], np.nan)
+                    datei2 = pd.read_csv(filename, skiprows=3, index_col=False)
+
+                    datei2 = datei2.fillna(0)\
+                        .replace([np.inf, -np.inf], np.nan)
+
                     datei2 = datei2.fillna(0)
                     try:
 
-                    	del datei2['Zeit']
+                        del datei2['Zeit']
                     except:
-                    	pass
+                        pass
                     try:
                         del datei2['Kommentar']
                     except:
-
-
                         pass
                     try:
 
-                        datei2['Q-Resorber']=datei2['Q-Resorber']*1000
+                        datei2['Q-Resorber'] = datei2['Q-Resorber']*1000
                     except KeyError:
                         pass
-                    zeiti=pd.date_range(datumzeit, periods=len(datei2),freq='S')
-                    datei2.index=zeiti
+                    zeiti = pd.date_range(datumzeit,
+                                          periods=len(datei2),
+                                          freq='S')
+                    datei2.index = zeiti
                     data = pd.DataFrame(datei2, index=zeiti)
 
-                    #tag=filename.replace('.csv','')
+                    # tag=filename.replace('.csv','')
                     # print data.dtypes
-                    client.write_points(data, messung,{'Filename': tag})
-                    print 'Ok neu:     %s'%(filename)
+                    client.write_points(data, messung, {'Filename': tag})
+                    print 'Ok neu:     %s' % (filename)
 
                 except ValueError:
-                	e = sys.exc_info()[0]
-                	print "<p>Error: %s</p>%s" % (e,filename)
-
-
-        #wenn vorhanden
+                    e = sys.exc_info()[0]
+                    print "<p>Error: %s</p>%s" % (e, filename)
+        # wenn vorhanden
         else:
-            #print 'ist vorhanden'
-		      pass
-
-
-
+            # print 'ist vorhanden'
+            pass
 print 'OK'
-        
-
-
-            
-           
