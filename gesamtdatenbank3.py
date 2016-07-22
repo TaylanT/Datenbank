@@ -44,8 +44,8 @@ def find_datumzeit(filename,status):
 zaehler = 0
 list = []
 pfad = u'/home/ttaylan/Dokumente/Datenbank/NeueDaten/'
-dbname = 'test2'
-messung = 'neu1'
+dbname = 'DataHeatPump'
+messung = 'NeueDaten'
 client = DataFrameClient('localhost', 8086, 'root', 'root', dbname)
 os.chdir(pfad)
 
@@ -108,50 +108,51 @@ for user in ordner:
             t2 = inhalt2.split('\n')
             # Bedingung wenn alte Messung
             if t2[0] == 'LabVIEW Measurement\t\r':
+                pass
                 
-                for row in in_txt:
-                    if index == 24:
-                        laenge = len(row)
+                # for row in in_txt:
+                #     if index == 24:
+                #         laenge = len(row)
 
-                        for spalte in row:
-                            conv = spalte.replace('\xd6', 'oe')\
-                                .replace('\xfc', 'ue').replace('\xb3', '3')
+                #         for spalte in row:
+                #             conv = spalte.replace('\xd6', 'oe')\
+                #                 .replace('\xfc', 'ue').replace('\xb3', '3')
 
-                            a.append(conv)
+                #             a.append(conv)
 
-                        del a[laenge-1]
-                        row = a
+                #         del a[laenge-1]
+                #         row = a
 
-                    if index > 24:
-                        del row[laenge-1]
-                        writer.writerow(row)
-                    else:
-                        writer.writerow(row)
+                #     if index > 24:
+                #         del row[laenge-1]
+                #         writer.writerow(row)
+                #     else:
+                #         writer.writerow(row)
 
-                    index = index+1
+                #     index = index+1
 
-                try:
-                    datumzeit = find_datumzeit(filename, 'alt')
-                    datei2 = pd.read_csv(filename,
-                                         skiprows=24,
-                                         index_col=False).fillna(0)
-                    try:
-                        del datei2['X_Value']
-                    except:
-                        pass
-                    zeiti = pd.date_range(datumzeit,
-                                          periods=len(datei2),
-                                          freq='S')
-                    datei2.index = zeiti
-                    data = pd.DataFrame(datei2, index=zeiti)
+                # try:
+                #     datumzeit = find_datumzeit(filename, 'alt')
+                #     datei2 = pd.read_csv(filename,
+                #                          skiprows=24,
+                #                          index_col=False).fillna(0)
+                #     try:
+                #         del datei2['X_Value']
+                #     except:
+                #         pass
+                #     zeiti = pd.date_range(datumzeit,
+                #                           periods=len(datei2),
+                #                           freq='S')
+                #     datei2.index = zeiti
+                #     data = pd.DataFrame(datei2, index=zeiti)
 
-                    client.write_points(data, messung, {'Filename': tag,
-                                                        'User': user})
-                    print 'alt erfolgreich! %s' % (filename)
-                    zaehler = zaehler+1
-                except:
+                #     client.write_points(data, messung, {'Filename': tag,
+                #                                         'User': user})
+                #     print 'alt erfolgreich! %s' % (filename)
+                #     zaehler = zaehler+1
+                # except:
 
-                    print 'DBError:     %s' % (filename)
+                #     print 'DBError:     %s' % (filename)
 
             else:
                 # NEUE MESSUNG############################################
@@ -163,14 +164,15 @@ for user in ordner:
 
                 try:
                     datumzeit = find_datumzeit(filename, 'neu')
-                    print datumzeit
+                    
                     datei2 = pd.read_csv(filename, skiprows=3, index_col=False)
 
                     datei2 = datei2.replace([np.inf, -np.inf], np.nan)
 
                     datei2 = datei2.fillna(0)
-
-                    datei2 = datei2.astype('float64')
+                    # print datei2.head()
+                    # datei2 = datei2.astype('float64')
+                    print datumzeit
                     try:
 
                         del datei2['Zeit']
@@ -193,10 +195,11 @@ for user in ordner:
 
                     # tag=filename.replace('.csv','')
                     # print data.dtypes
-                    client.write_points(data, messung, {'Filename': tag})
+                    client.write_points(data, messung, {'Filename': tag,
+                                                        'User': user})
                     print 'Ok neu:     %s' % (filename)
 
-                except ValueError:
+                except:
                     e = sys.exc_info()[0]
                     print "<p>Error: %s</p>%s" % (e, filename)
         # wenn vorhanden
